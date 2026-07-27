@@ -1,2 +1,2 @@
-# portal-operacao
-Portal da Operação - Energia Pecém
+# Gestão equipe E
+Gestão equipe E - Energia Pecém
