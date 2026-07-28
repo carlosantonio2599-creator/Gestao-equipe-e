@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RondaFlow - Fechamento Mensal</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --dark:#0a1a4a; --blue:#1a3a7a; --cyan:#0099cc; --orange:#f47b20;
+  --bg:#f0f2f5; --green:#16a34a; --red:#dc2626; --yellow:#f59e0b; --line:#e4e7ec;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#333}
+.header{background:linear-gradient(135deg,#0a1a4a,#0099cc);color:#fff;padding:18px 24px;box-shadow:0 2px 10px rgba(0,0,0,.14)}
+.header-inner{max-width:1450px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px}.logo{width:76px;height:58px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:7px;box-shadow:0 2px 8px rgba(0,0,0,.15)}.logo img{max-width:100%;max-height:100%;object-fit:contain}
+h1{margin:0;font-size:28px}.subtitle{margin:4px 0 0;opacity:.9}.year{text-align:right}.year b{font-size:28px;color:var(--orange)}
+nav{display:flex;justify-content:center;background:var(--blue);position:sticky;top:0;z-index:5;box-shadow:0 2px 7px rgba(0,0,0,.18);flex-wrap:wrap}
+.nav{border:0;background:var(--blue);color:#fff;padding:13px 20px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent}.nav.active{background:var(--cyan);border-bottom-color:var(--orange)}
+main{max-width:1450px;margin:auto;padding:20px}.tab{display:none}.tab.active{display:block}
+.card{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.06);padding:18px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}label{font-weight:700;color:var(--dark);font-size:13px}input,select,textarea{width:100%;border:1px solid #d0d5dd;border-radius:8px;padding:9px;background:#fff}textarea{min-height:48px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.btn{border:0;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}.primary{background:var(--orange);color:#fff}.secondary{background:var(--blue);color:#fff}.light{background:#eef6ff;color:var(--blue);border:1px solid #b6d9f1}.danger{background:#fee2e2;color:#991b1b}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}.kpi{border-top:4px solid var(--cyan)}.kpi.orange{border-top-color:var(--orange)}.kpi-title{font-size:13px;color:#667085;font-weight:700}.kpi-value{font-size:32px;font-weight:800;color:var(--dark);margin-top:4px}.orange-text{color:var(--orange)}.red-text{color:var(--red)}.small{font-size:12px;color:#777}
+.table-wrap{max-height:620px;overflow:auto;border:1px solid var(--line);border-radius:10px}table{width:100%;border-collapse:collapse;background:#fff}th,td{border-bottom:1px solid var(--line);padding:8px;font-size:12px;text-align:left}th{background:var(--dark);color:#fff;position:sticky;top:0;z-index:2}td.sticky,th.sticky{position:sticky;left:0;background:#fff;z-index:3}th.sticky{background:var(--dark)}.ronda-col{min-width:250px}.area-col{min-width:160px}
+.team-group{text-align:center!important;background:#123b63!important}.meta-cell{background:#f8fafc;color:#475467;text-align:center}.real-input{width:70px;text-align:center;padding:6px;border-radius:6px;border:1px solid #d0d5dd}.obs-input{width:150px;padding:6px}.gap{font-weight:800;text-align:center}.gap-ok{color:var(--green)}.gap-bad{color:var(--red)}.gap-warn{color:var(--yellow)}.status{display:inline-block;padding:3px 8px;border-radius:999px;font-weight:700;font-size:11px}.ok{background:#dcfce7;color:#166534}.bad{background:#fee2e2;color:#991b1b}.warn{background:#fef3c7;color:#92400e}
+.tag{font-weight:800;color:#fff;background:var(--cyan);padding:6px 10px;border-radius:8px;display:inline-block;margin-bottom:10px}.note{background:#fff7ed;border-left:5px solid var(--orange);padding:12px;border-radius:8px;margin:12px 0;color:#7c2d12}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}.chart{height:300px}
+@media(max-width:1050px){.grid,.kpis,.two{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.grid,.kpis,.two{grid-template-columns:1fr}nav{justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap}.year{text-align:left}}
+@media print{nav,.actions,.no-print,footer{display:none!important}.tab{display:block!important}main{padding:0}.card{box-shadow:none;break-inside:avoid}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-inner">
+    <div class="brand"><div class="logo"><img src="data:image/png;base64,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" alt="Diamante"></div><div><h1>RondaFlow - Fechamento Mensal</h1><p class="subtitle">Controle das rondas físicas por equipe A, B, C, D e E</p></div></div>
+    <div class="year"><span>Ano Operacional</span><br><b>2026</b></div>
+  </div>
+</header>
+<nav>
+  <button class="nav active" onclick="showTab('fechamento')">📝 Fechamento Mensal</button>
+  <button class="nav" onclick="showTab('dashboard')">📊 Dashboard</button>
+  <button class="nav" onclick="showTab('metas')">⚙️ Metas</button>
+  <button class="nav" onclick="showTab('relatorio')">📄 Relatório</button>
+  <button class="nav" onclick="showTab('backup')">💾 Backup</button>
+</nav>
+<main>
+<section id="fechamento" class="tab active">
+  <div class="card">
+    <span class="tag">Lançamento principal</span>
+    <h2>Fechamento mensal por equipe</h2>
+    <div class="note"><b>Uso previsto:</b> no fim do mês, o operador conta as fichas físicas das equipes A, B, C, D e E e digita somente a quantidade realizada. O sistema calcula gap, status, aderência e relatório.</div>
+    <div class="grid">
+      <div><label>Mês de referência</label><input type="month" id="mesRef" onchange="renderAll()"></div>
+      <div><label>Responsável</label><input id="responsavel" placeholder="Nome do responsável"></div>
+      <div><label>Área</label><select id="filtroArea" onchange="renderFechamento()"></select></div>
+      <div><label>Periodicidade</label><select id="filtroPer" onchange="renderFechamento()"><option value="">Todas</option><option>MENSAL</option><option>SEMANAL</option><option>DIÁRIO</option></select></div>
+      <div><label>Buscar</label><input id="busca" placeholder="Nome da ronda" oninput="renderFechamento()"></div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" onclick="salvarFechamento()">Salvar fechamento mensal</button>
+      <button class="btn secondary" onclick="preencherTudoComMeta()">Preencher tudo com meta</button>
+      <button class="btn light" onclick="zerarTudo()">Zerar realizado</button>
+      <button class="btn light" onclick="window.print()">Imprimir conferência</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Matriz de contagem física</h2>
+    <div id="matrizFechamento" class="table-wrap"></div>
+  </div>
+</section>
+
+<section id="dashboard" class="tab">
+  <div class="kpis">
+    <div class="card kpi"><div class="kpi-title">Meta Geral</div><div class="kpi-value" id="kMeta">0</div></div>
+    <div class="card kpi"><div class="kpi-title">Realizado</div><div class="kpi-value orange-text" id="kReal">0</div></div>
+    <div class="card kpi orange"><div class="kpi-title">% Cumprimento</div><div class="kpi-value orange-text" id="kAder">0%</div></div>
+    <div class="card kpi"><div class="kpi-title">Gap</div><div class="kpi-value red-text" id="kGap">0</div></div>
+    <div class="card kpi"><div class="kpi-title">Pendências</div><div class="kpi-value" id="kPend">0</div></div>
+  </div>
+  <div class="two">
+    <div class="card"><h2>Desempenho por Equipe</h2><div id="dashEquipe"></div></div>
+    <div class="card"><h2>Meta x Realizado</h2><div class="chart"><canvas id="chartEquipe"></canvas></div></div>
+  </div>
+  <div class="card"><h2>Resumo por Área</h2><div id="dashArea"></div></div>
+</section>
+
+<section id="metas" class="tab">
+  <div class="card">
+    <h2>Administração de metas por equipe</h2>
+    <p class="small">Ajuste as metas individuais por equipe quando necessário.</p>
+    <div class="actions"><button class="btn primary" onclick="salvarMetas()">Salvar metas</button><button class="btn light" onclick="restaurarMetas()">Restaurar padrão</button></div>
+    <div id="tabelaMetas" class="table-wrap"></div>
+  </div>
+</section>
+
+<section id="relatorio" class="tab">
+  <div class="card">
+    <h2>Relatório mensal</h2>
+    <div class="actions no-print"><button class="btn secondary" onclick="exportCSV()">Exportar CSV</button><button class="btn light" onclick="window.print()">Imprimir relatório</button><button class="btn danger" onclick="limparDadosMes()">Limpar mês</button></div>
+    <div id="relatorioMensal"></div>
+  </div>
+</section>
+
+<section id="backup" class="tab">
+  <div class="card">
+    <h2>Backup</h2>
+    <p>Os dados ficam salvos no navegador. Exporte backup periodicamente.</p>
+    <div class="actions"><button class="btn primary" onclick="exportarBackup()">Exportar JSON</button><label class="btn secondary">Importar JSON<input type="file" accept=".json" onchange="importarBackup(this)" style="display:none"></label></div>
+  </div>
+</section>
+</main>
+<footer style="background:#0a1a4a;color:white;text-align:center;padding:14px;margin-top:24px;font-size:13px">RondaFlow - Fechamento Mensal © 2026</footer>
+<script>
+const metasPadrao = [{"periodicidade": "MENSAL", "area": "CALDEIRA", "ronda": "CALDEIRA UG1", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "CALDEIRA", "ronda": "CALDEIRA UG2", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "SEMANAL", "area": "CALDEIRA", "ronda": "SOPRADORES UG1", "metaA": 4, "metaB": 4, "metaC": 4, "metaD": 4, "metaE": 4}, {"periodicidade": "SEMANAL", "area": "CALDEIRA", "ronda": "SOPRADORES UG2", "metaA": 4, "metaB": 4, "metaC": 4, "metaD": 4, "metaE": 4}, {"periodicidade": "MENSAL", "area": "CALDEIRA", "ronda": "INSPEÇÃO CHAMA UG1", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "CALDEIRA", "ronda": "INSPEÇÃO CHAMA UG2", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "TURBINA", "ronda": "TURBINA UG1", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "TURBINA", "ronda": "TURBINA UG2", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "TURBINA", "ronda": "TURBINA SALA DCS UG1", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "TURBINA", "ronda": "TURBINA SALA DCS UG2", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "FGD", "ronda": "FGD UG1", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "FGD", "ronda": "FGD UG2", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "FGD", "ronda": "CHECK LIST FGD UG1", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "FGD", "ronda": "CHECK LIST FGD UG2", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "SALA DE CONTROLE", "ronda": "CHECK LIST DCS UG1", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "SALA DE CONTROLE", "ronda": "CHECK LIST DCS UG2", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "GERAIS", "ronda": "GERAIS", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "APOIO OPERACIONAL", "ronda": "CHECK LIST EMPILHADEIRA", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "SEMANAL", "area": "UTILIDADES", "ronda": "GERADOR DIESEL", "metaA": 2, "metaB": 2, "metaC": 2, "metaD": 2, "metaE": 2}, {"periodicidade": "MENSAL", "area": "ELÉTRICA", "ronda": "SUBESTAÇÃO", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "MENSAL", "area": "CARVÃO", "ronda": "BUNKERS", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "SEMANAL", "area": "SPCI", "ronda": "SPRINKLERS", "metaA": 2, "metaB": 2, "metaC": 2, "metaD": 2, "metaE": 2}, {"periodicidade": "DIÁRIO", "area": "TURBINA", "ronda": "TORRE DE RESFRIAMENTO UG1", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "DIÁRIO", "area": "TURBINA", "ronda": "TORRE DE RESFRIAMENTO UG2", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "DIÁRIO", "area": "CARVÃO", "ronda": "COLETA DE CARVÃO UG1", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "DIÁRIO", "area": "CARVÃO", "ronda": "COLETA DE CARVÃO UG2", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "DIÁRIO", "area": "UFV / H2V", "ronda": "INSPEÇÃO UFV", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "DIÁRIO", "area": "UFV / H2V", "ronda": "INSPEÇÃO H2V", "metaA": 18, "metaB": 18, "metaC": 19, "metaD": 19, "metaE": 19}, {"periodicidade": "SEMANAL", "area": "TURBINA", "ronda": "BB's CIRC. TORRE E EST. UG1", "metaA": 2, "metaB": 2, "metaC": 2, "metaD": 2, "metaE": 2}, {"periodicidade": "SEMANAL", "area": "TURBINA", "ronda": "BB's CIRC. TORRE E EST. UG2", "metaA": 2, "metaB": 2, "metaC": 2, "metaD": 2, "metaE": 2}, {"periodicidade": "SEMANAL", "area": "TURBINA", "ronda": "BOMBAS CICLO TÉRMICO UG1", "metaA": 2, "metaB": 2, "metaC": 2, "metaD": 2, "metaE": 2}, {"periodicidade": "SEMANAL", "area": "TURBINA", "ronda": "BOMBAS CICLO TÉRMICO UG2", "metaA": 2, "metaB": 2, "metaC": 2, "metaD": 2, "metaE": 2}, {"periodicidade": "SEMANAL", "area": "FGD", "ronda": "TESTES DO FGD UG1", "metaA": 2, "metaB": 2, "metaC": 2, "metaD": 2, "metaE": 2}, {"periodicidade": "SEMANAL", "area": "FGD", "ronda": "TESTES DO FGD UG2", "metaA": 2, "metaB": 2, "metaC": 2, "metaD": 2, "metaE": 2}, {"periodicidade": "SEMANAL", "area": "TURBINA", "ronda": "TESTES DA TURBINA UG1", "metaA": 2, "metaB": 2, "metaC": 2, "metaD": 2, "metaE": 2}, {"periodicidade": "SEMANAL", "area": "TURBINA", "ronda": "TESTES DA TURBINA UG2", "metaA": 2, "metaB": 2, "metaC": 2, "metaD": 2, "metaE": 2}, {"periodicidade": "SEMANAL", "area": "CARVÃO", "ronda": "STACKER 1", "metaA": 2, "metaB": 2, "metaC": 2, "metaD": 2, "metaE": 2}, {"periodicidade": "SEMANAL", "area": "CARVÃO", "ronda": "STACKER 2", "metaA": 2, "metaB": 2, "metaC": 2, "metaD": 2, "metaE": 2}, {"periodicidade": "SEMANAL", "area": "CARVÃO", "ronda": "TRIPPER", "metaA": 2, "metaB": 2, "metaC": 2, "metaD": 2, "metaE": 2}];
+const equipes = ['A','B','C','D','E'];
+const supervisores = {A:'Tiago',B:'Rodolfo',C:'Edney',D:'Celso',E:'Antônio'};
+let metas = JSON.parse(localStorage.getItem('rfm_metas')||'null') || metasPadrao;
+let fechamentos = JSON.parse(localStorage.getItem('rfm_fechamentos')||'{}');
+let chart = null;
+
+function $(id){return document.getElementById(id)}
+function mesAtual(){return new Date().toISOString().slice(0,7)}
+function areas(){return [...new Set(metas.map(x=>x.area))].sort()}
+function chaveMes(){return $('mesRef').value || mesAtual()}
+function showTab(id){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelector(`button[onclick="showTab('${id}')"]`)?.classList.add('active');renderAll()}
+function init(){$('mesRef').value = mesAtual();preencherFiltros();renderAll()}
+
+function preencherFiltros(){
+  $('filtroArea').innerHTML = '<option value="">Todas as áreas</option>' + areas().map(a=>`<option>${a}</option>`).join('');
+}
+
+function getValor(mes, idx, equipe, campo){
+  return (((fechamentos[mes]||{})[idx]||{})[equipe]||{})[campo] ?? '';
+}
+function setValor(mes, idx, equipe, campo, valor){
+  if(!fechamentos[mes]) fechamentos[mes] = {};
+  if(!fechamentos[mes][idx]) fechamentos[mes][idx] = {};
+  if(!fechamentos[mes][idx][equipe]) fechamentos[mes][idx][equipe] = {};
+  fechamentos[mes][idx][equipe][campo] = valor;
+}
+
+function renderFechamento(){
+  let mes = chaveMes();
+  let area = $('filtroArea').value;
+  let per = $('filtroPer').value;
+  let busca = ($('busca').value||'').toLowerCase();
+  let lista = metas.map((m,i)=>({...m,idx:i})).filter(m=>(!area||m.area===area)&&(!per||m.periodicidade===per)&&(!busca||m.ronda.toLowerCase().includes(busca)));
+  let html = `<table><thead><tr>
+    <th class="sticky area-col">Área</th><th class="ronda-col">Ronda</th><th>Per.</th>
+    ${equipes.map(e=>`<th class="team-group" colspan="4">Equipe ${e}<br><span class="small" style="color:white">${supervisores[e]}</span></th>`).join('')}
+  </tr><tr>
+    <th class="sticky"> </th><th> </th><th> </th>
+    ${equipes.map(e=>'<th>Meta</th><th>Real</th><th>Gap</th><th>Obs</th>').join('')}
+  </tr></thead><tbody>`;
+  lista.forEach(m=>{
+    html += `<tr><td class="sticky">${m.area}</td><td><b>${m.ronda}</b></td><td>${m.periodicidade}</td>`;
+    equipes.forEach(e=>{
+      let meta = Number(m['meta'+e]||0);
+      let real = Number(getValor(mes,m.idx,e,'real') || 0);
+      let obs = getValor(mes,m.idx,e,'obs') || '';
+      let gap = real - meta;
+      let cls = gap >= 0 ? 'gap-ok' : real > 0 ? 'gap-warn' : 'gap-bad';
+      html += `<td class="meta-cell">${meta}</td>
+        <td><input class="real-input" type="number" min="0" value="${real}" onchange="alterarReal('${mes}',${m.idx},'${e}',this.value)"></td>
+        <td class="gap ${cls}">${gap}</td>
+        <td><input class="obs-input" value="${obs}" onchange="alterarObs('${mes}',${m.idx},'${e}',this.value)" placeholder="Obs"></td>`;
+    });
+    html += `</tr>`;
+  });
+  html += '</tbody></table>';
+  $('matrizFechamento').innerHTML = html;
+}
+
+function alterarReal(mes,idx,equipe,valor){setValor(mes,idx,equipe,'real',Number(valor||0));salvarLocal();renderAll(false)}
+function alterarObs(mes,idx,equipe,valor){setValor(mes,idx,equipe,'obs',valor);salvarLocal()}
+
+function preencherTudoComMeta(){
+  let mes = chaveMes();
+  metas.forEach((m,idx)=>equipes.forEach(e=>setValor(mes,idx,e,'real',Number(m['meta'+e]||0))));
+  salvarLocal();renderAll();
+}
+function zerarTudo(){
+  if(!confirm('Zerar todos os valores realizados do mês selecionado?')) return;
+  let mes = chaveMes();
+  metas.forEach((m,idx)=>equipes.forEach(e=>setValor(mes,idx,e,'real',0)));
+  salvarLocal();renderAll();
+}
+function salvarFechamento(){salvarLocal();alert('Fechamento mensal salvo.')}
+function salvarLocal(){localStorage.setItem('rfm_fechamentos',JSON.stringify(fechamentos));localStorage.setItem('rfm_metas',JSON.stringify(metas))}
+
+function resumoEquipe(mes){
+  return equipes.map(e=>{
+    let meta=0, real=0, pend=0;
+    metas.forEach((m,idx)=>{
+      let mt=Number(m['meta'+e]||0), rl=Number(getValor(mes,idx,e,'real')||0);
+      meta += mt; real += rl; if(rl < mt) pend++;
+    });
+    return {equipe:e, supervisor:supervisores[e], meta, realizado:real, gap:real-meta, aderencia:meta?Math.round(real/meta*100)+'%':'0%', pendencias:pend};
+  });
+}
+function resumoArea(mes){
+  return areas().map(a=>{
+    let meta=0, real=0;
+    metas.filter(m=>m.area===a).forEach(m=>{
+      let idx=metas.indexOf(m);
+      equipes.forEach(e=>{meta+=Number(m['meta'+e]||0);real+=Number(getValor(mes,idx,e,'real')||0)});
+    });
+    return {area:a,meta,realizado:real,gap:real-meta,aderencia:meta?Math.round(real/meta*100)+'%':'0%'};
+  });
+}
+
+function renderDashboard(){
+  let mes=chaveMes(), eq=resumoEquipe(mes);
+  let meta=eq.reduce((s,x)=>s+x.meta,0), real=eq.reduce((s,x)=>s+x.realizado,0), pend=eq.reduce((s,x)=>s+x.pendencias,0);
+  $('kMeta').textContent=meta;$('kReal').textContent=real;$('kAder').textContent=meta?Math.round(real/meta*100)+'%':'0%';$('kGap').textContent=Math.max(meta-real,0);$('kPend').textContent=pend;
+  $('dashEquipe').innerHTML=tabela(eq,['equipe','supervisor','meta','realizado','gap','aderencia','pendencias']);
+  $('dashArea').innerHTML=tabela(resumoArea(mes),['area','meta','realizado','gap','aderencia']);
+  renderChart(eq);
+}
+
+function renderChart(eq){
+  let ctx=$('chartEquipe'); if(!ctx) return;
+  if(chart) chart.destroy();
+  chart = new Chart(ctx,{type:'bar',data:{labels:eq.map(x=>x.equipe+' ('+x.supervisor+')'),datasets:[{label:'Meta',data:eq.map(x=>x.meta),backgroundColor:'#1a3a7a',borderRadius:6},{label:'Realizado',data:eq.map(x=>x.realizado),backgroundColor:'#f47b20',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true},x:{grid:{display:false}}}}});
+}
+
+function renderMetas(){
+  let html='<table><thead><tr><th>Periodicidade</th><th>Área</th><th>Ronda</th>'+equipes.map(e=>`<th>Meta ${e}</th>`).join('')+'</tr></thead><tbody>';
+  metas.forEach((m,i)=>{
+    html += `<tr><td><select onchange="metas[${i}].periodicidade=this.value;salvarLocal()"><option ${m.periodicidade==='MENSAL'?'selected':''}>MENSAL</option><option ${m.periodicidade==='SEMANAL'?'selected':''}>SEMANAL</option><option ${m.periodicidade==='DIÁRIO'?'selected':''}>DIÁRIO</option></select></td>
+      <td><input value="${m.area}" onchange="metas[${i}].area=this.value;salvarLocal();preencherFiltros();renderAll()"></td>
+      <td><input value="${m.ronda}" onchange="metas[${i}].ronda=this.value;salvarLocal();renderAll()"></td>
+      ${equipes.map(e=>`<td><input class="real-input" type="number" value="${m['meta'+e]||0}" onchange="metas[${i}]['meta${e}']=Number(this.value||0);salvarLocal();renderAll()"></td>`).join('')}
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  $('tabelaMetas').innerHTML=html;
+}
+
+function renderRelatorio(){
+  let mes=chaveMes(), rows=[];
+  metas.forEach((m,idx)=>equipes.forEach(e=>{
+    let meta=Number(m['meta'+e]||0), real=Number(getValor(mes,idx,e,'real')||0);
+    rows.push({mes,equipe:e,supervisor:supervisores[e],area:m.area,ronda:m.ronda,periodicidade:m.periodicidade,meta,realizado:real,gap:real-meta,obs:getValor(mes,idx,e,'obs')||''});
+  }));
+  $('relatorioMensal').innerHTML=tabela(rows,['mes','equipe','supervisor','area','ronda','periodicidade','meta','realizado','gap','obs']);
+}
+
+function tabela(arr,cols){
+  if(!arr.length) return '<p>Nenhum registro encontrado.</p>';
+  return `<table><thead><tr>${cols.map(c=>`<th>${nome(c)}</th>`).join('')}</tr></thead><tbody>${arr.map(x=>`<tr>${cols.map(c=>`<td>${fmt(c,x[c])}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+function fmt(c,v){if(c==='gap'){let cls=Number(v)>=0?'ok':Number(v)>-3?'warn':'bad';return `<span class="status ${cls}">${v}</span>`}return v??''}
+function nome(c){return {mes:'Mês',equipe:'Equipe',supervisor:'Supervisor',area:'Área',ronda:'Ronda',periodicidade:'Periodicidade',meta:'Meta',realizado:'Realizado',gap:'Gap',aderencia:'Aderência',pendencias:'Pendências',obs:'Observação'}[c]||c}
+
+function renderAll(atualizarMatriz=true){if(atualizarMatriz)renderFechamento();renderDashboard();renderMetas();renderRelatorio()}
+
+function exportCSV(){
+  let mes=chaveMes(), rows=[['Mês','Equipe','Supervisor','Área','Ronda','Periodicidade','Meta','Realizado','Gap','Observação']];
+  metas.forEach((m,idx)=>equipes.forEach(e=>{
+    let meta=Number(m['meta'+e]||0), real=Number(getValor(mes,idx,e,'real')||0);
+    rows.push([mes,e,supervisores[e],m.area,m.ronda,m.periodicidade,meta,real,real-meta,getValor(mes,idx,e,'obs')||'']);
+  }));
+  let csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(';')).join('\n');
+  let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='fechamento_mensal_rondas.csv';a.click();
+}
+function limparDadosMes(){let mes=chaveMes();if(confirm('Limpar todos os dados do mês '+mes+'?')){delete fechamentos[mes];salvarLocal();renderAll()}}
+function restaurarMetas(){if(confirm('Restaurar metas padrão?')){metas=metasPadrao;salvarLocal();preencherFiltros();renderAll()}}
+function exportarBackup(){let b={metas,fechamentos,data:new Date().toLocaleString('pt-BR')};let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(b,null,2)],{type:'application/json'}));a.download='backup_fechamento_rondas.json';a.click()}
+function importarBackup(input){let f=input.files[0];if(!f)return;let r=new FileReader();r.onload=e=>{let b=JSON.parse(e.target.result);if(b.metas)metas=b.metas;if(b.fechamentos)fechamentos=b.fechamentos;salvarLocal();preencherFiltros();renderAll();alert('Backup importado.')};r.readAsText(f)}
+
+init();
+</script>
+</body>
+</html>
