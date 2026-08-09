@@ -7,7 +7,8 @@
 <!-- Versão 4.1: cabeçalho corporativo -->
 <!-- Versão 4.2: importação ampliada do Banco de Horas -->
 <!-- Versão 4.3.2: rota em laranja, folgas aprovadas para operador e remoção do efetivo semanal -->
-<title>Gestão Equipe E - V4.8 | Impressão A4</title>
+<title>Gestão Equipe E - V4.13 | Treinamentos Atualizáveis</title>
+<!-- Versão 4.9: dashboard reativo e conclusão de folgas com liberação automática do banco de horas -->
 <!-- Versão 4.8: cabeçalho centralizado, sem logo e impressão otimizada para A4 -->
 <!-- Versão 4.7: melhorias no módulo Infraestrutura e padronização de impressão -->
 <!-- Versão 4.6: integração do módulo da Brigada de Emergência -->
@@ -959,7 +960,26 @@ color:#fff!important;
 
     <section id="aprovacao" class="view">
       <div class="card">
-        <div class="section-head"><div class="icon">✓</div><h2>Folgas para análise</h2></div>
+        <div class="section-head"><div class="icon">✓</div><h2>Gestão de folgas</h2></div>
+        <div class="resumo" id="resumoFolgasAnalise" style="margin-bottom:14px">
+          <div class="mini-card">
+            <div id="folgasSolicitadasTotal" class="numero">0</div>
+            <div>Folgas solicitadas</div>
+          </div>
+          <div class="mini-card">
+            <div id="folgasConcluidasTotal" class="numero">0</div>
+            <div>Folgas concluídas</div>
+          </div>
+          <div class="mini-card">
+            <div id="folgasPendentesTotal" class="numero">0</div>
+            <div>Pendentes</div>
+          </div>
+          <div class="mini-card">
+            <div id="folgasAprovadasTotal" class="numero">0</div>
+            <div>Aprovadas</div>
+          </div>
+        </div>
+
         <div class="filters no-print">
           <div><label>Data inicial</label><input id="filtroInicio" type="date"></div>
           <div><label>Data final</label><input id="filtroFim" type="date"></div>
@@ -1088,7 +1108,7 @@ color:#fff!important;
         </div>
 
         <table>
-          <thead><tr><th>Colaborador</th><th>Treinamento</th><th>Realização</th><th>Validade</th><th>Status</th><th class="no-print">Ações</th></tr></thead>
+          <thead><tr><th>Colaborador</th><th>Treinamento</th><th>Realização</th><th>Validade</th><th>Status</th><th class="no-print">Ações</th><th class="no-print">Ações</th></tr></thead>
           <tbody id="tbodyTreinamentos"></tbody>
         </table>
       </div>
@@ -1236,15 +1256,52 @@ color:#fff!important;
 
 <div id="modalFolga" class="modal hidden no-print">
   <div class="modal-box">
-    <div class="modal-head"><h3>Editar folga aprovada</h3><button id="btnFecharModal" class="btn-gray">×</button></div>
+    <div class="modal-head"><h3>Editar folga aprovada</h3><button id="btnFecharModal" class="btn-gray">x</button></div>
     <div class="grid" style="margin-top:14px">
       <div><label>Colaborador</label><select id="editFolgaNome"></select></div>
       <div><label>Data</label><input id="editFolgaData" type="date"></div>
       <div><label>Período</label><select id="editFolgaPeriodo"><option>Manhã</option><option>Tarde</option><option>Noite</option></select></div>
+      <div><label>Status</label><select id="editFolgaStatus"><option>Pendente</option><option>Aprovada</option><option>Reprovada</option><option>Concluída</option></select></div>
     </div>
     <div class="actions">
       <button id="btnSalvarEdicaoFolga" class="btn-green">Salvar alteração</button>
       <button id="btnCancelarEdicaoFolga" class="btn-gray">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="modalTreinamento" class="modal hidden no-print">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Atualizar treinamento</h3>
+      <button id="btnFecharTreinamento" class="btn-gray">X</button>
+    </div>
+    <div style="margin-top:12px">
+      <label>Colaborador</label>
+      <input id="editTreinamentoNome" disabled>
+    </div>
+    <div style="margin-top:12px">
+      <label>Treinamento</label>
+      <textarea id="editTreinamentoTitulo" rows="2"></textarea>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <div>
+        <label>Data da realização</label>
+        <input id="editTreinamentoRealizacao" type="date">
+      </div>
+      <div>
+        <label>Data de vencimento</label>
+        <input id="editTreinamentoValidade" type="date">
+      </div>
+      <div>
+        <label>Observação</label>
+        <input id="editTreinamentoObs" placeholder="Ex.: certificado pendente">
+      </div>
+    </div>
+    <div class="actions">
+      <button id="btnSalvarTreinamento" class="btn-green">Salvar atualização</button>
+      <button id="btnCancelarTreinamento" class="btn-gray">Cancelar</button>
     </div>
   </div>
 </div>
@@ -1403,7 +1460,7 @@ function applyPermissions(){
   if(tituloFolgas){
     tituloFolgas.textContent=perfilAtual()==="operador"
       ? "Folgas aprovadas"
-      : "Folgas para análise";
+      : "Gestão de folgas";
   }
 }
 
@@ -1517,19 +1574,42 @@ function statusBadge(status){
   return `<span class="badge ${String(status).toLowerCase()}">${status}</span>`;
 }
 
+function atualizarIndicadoresFolgas(){
+  const solicitadas=state.folgas.length;
+  const concluidas=state.folgas.filter(f=>f.status==="Concluída").length;
+  const pendentes=state.folgas.filter(f=>f.status==="Pendente").length;
+  const aprovadas=state.folgas.filter(f=>f.status==="Aprovada").length;
+  if($("folgasSolicitadasTotal")) $("folgasSolicitadasTotal").textContent=solicitadas;
+  if($("folgasConcluidasTotal")) $("folgasConcluidasTotal").textContent=concluidas;
+  if($("folgasPendentesTotal")) $("folgasPendentesTotal").textContent=pendentes;
+  if($("folgasAprovadasTotal")) $("folgasAprovadasTotal").textContent=aprovadas;
+}
+
 function renderFolgas(list=state.folgas){
-  const hojeIso=new Date().toISOString().slice(0,10);
-  // Folgas aprovadas cuja data já passou deixam de aparecer na fila de aprovação.
-  list=list.filter(f=>!(f.status==="Aprovada" && f.data && f.data<hojeIso));
+  atualizarIndicadoresFolgas();
+  // Mantém as folgas concluídas como histórico e sempre as posiciona no fim da fila.
+  // Dentro de cada grupo, as folgas são ordenadas pela data.
+  list=[...list].sort((a,b)=>{
+    const aConcluida=a.status==="Concluída" ? 1 : 0;
+    const bConcluida=b.status==="Concluída" ? 1 : 0;
+    if(aConcluida!==bConcluida) return aConcluida-bConcluida;
+    return String(a.data||"").localeCompare(String(b.data||""));
+  });
   if(perfilAtual()==="operador"){
-    list=list.filter(f=>f.status==="Aprovada");
+    list=list.filter(f=>["Aprovada","Concluída"].includes(f.status));
   }
   $("tbodyFolgas").innerHTML=list.map(f=>{
-    const actions=isGestor()
-      ? `${f.status==="Aprovada" ? `<button class="btn-edit" data-action="edit-folga" data-id="${f.id}">Editar</button>` : ""}
-         <button class="btn-green" data-action="status-folga" data-status="Aprovada" data-id="${f.id}">Aprovar</button>
-         <button class="btn-red" data-action="status-folga" data-status="Reprovada" data-id="${f.id}">Reprovar</button>`
-      : "";
+    let actions="";
+    if(isGestor()){
+      if(f.status==="Pendente"){
+        actions=`<button class="btn-green" data-action="status-folga" data-status="Aprovada" data-id="${f.id}">Aprovar</button>
+                 <button class="btn-red" data-action="status-folga" data-status="Reprovada" data-id="${f.id}">Reprovar</button>`;
+      }else if(f.status==="Aprovada"){
+        actions=`<button class="btn-edit" data-action="edit-folga" data-id="${f.id}">Editar / Finalizar</button>`;
+      }else if(f.status==="Concluída"){
+        actions=`<span class="badge concluída">Histórico concluído</span>`;
+      }
+    }
     return `<tr>
       <td data-label="Colaborador">${f.nome||""}</td>
       <td data-label="Data">${formatDate(f.data)}</td>
@@ -1908,17 +1988,18 @@ $("arquivoBanco")?.addEventListener("change",e=>{
 
 
 function renderDashboard(){
-  $("kpiColaboradores").textContent=state.colaboradores.length;
+  const hojeIso=new Date().toISOString().slice(0,10);
+  $("kpiColaboradores").textContent=state.colaboradores.filter(c=>c.ativo!==false).length;
   if($("bancoEquipeCadastrada")) $("bancoEquipeCadastrada").textContent=state.colaboradores.filter(c=>c.ativo!==false).length;
   $("kpiFolgasPendentes").textContent=state.folgas.filter(f=>f.status==="Pendente").length;
-  $("kpiFeriasProximas").textContent=state.ferias.filter(f=>["Programada","Aprovada"].includes(f.status)).length;
+  $("kpiFeriasProximas").textContent=state.ferias.filter(f=>["Programada","Aprovada"].includes(f.status) && (!f.fim || f.fim>=hojeIso)).length;
   $("kpiBancoNegativo").textContent=state.bancoHoras.filter(b=>{const s=saldoDisponivelMinutos(b.nome);return s!==null&&s<0;}).length;
-  $("kpiTreinamentosVencer").textContent=state.treinamentos.filter(t=>["vencer","vencido"].includes(statusTreinamento(t.validade).chave)).length;
+  $("kpiTreinamentosVencer").textContent=state.treinamentos.filter(t=>["vencer","vencido"].includes(statusTreinamento(t.validade,t.realizacao,t.treinamento).chave)).length;
 
   const ausencias=[
-    ...state.folgas.filter(f=>f.status==="Aprovada").map(f=>({nome:f.nome,data:f.data,tipo:`Folga - ${f.periodo||""}`})),
-    ...state.ferias.filter(f=>["Programada","Aprovada"].includes(f.status)).map(f=>({nome:f.nome,data:f.inicio,tipo:"Férias"}))
-  ].sort((a,b)=>a.data.localeCompare(b.data)).slice(0,8);
+    ...state.folgas.filter(f=>f.status==="Aprovada" && (!f.data || f.data>=hojeIso)).map(f=>({nome:f.nome,data:f.data,tipo:`Folga - ${f.periodo||""}`})),
+    ...state.ferias.filter(f=>["Programada","Aprovada"].includes(f.status) && (!f.fim || f.fim>=hojeIso)).map(f=>({nome:f.nome,data:f.inicio,tipo:"Férias"}))
+  ].filter(a=>a.data).sort((a,b)=>a.data.localeCompare(b.data)).slice(0,8);
 
   $("proximasAusencias").innerHTML=ausencias.length
     ? ausencias.map(a=>`<div style="border-left:4px solid var(--azul);padding:8px 10px;margin:8px 0;background:#f8fbfe;border-radius:8px"><b>${a.nome}</b><br><span style="font-size:12px;color:var(--muted)">${formatDate(a.data)} • ${a.tipo}</span></div>`).join("")
@@ -1929,7 +2010,7 @@ function renderDashboard(){
   if(negativos.length)alertas.push(`${negativos.length} colaborador(es) com banco negativo.`);
   const pendentes=state.folgas.filter(f=>f.status==="Pendente").length;
   if(pendentes)alertas.push(`${pendentes} solicitação(ões) aguardando análise.`);
-  const treinCriticos=state.treinamentos.filter(t=>["vencer","vencido"].includes(statusTreinamento(t.validade).chave));
+  const treinCriticos=state.treinamentos.filter(t=>["vencer","vencido"].includes(statusTreinamento(t.validade,t.realizacao,t.treinamento).chave));
   if(treinCriticos.length)alertas.push(`${treinCriticos.length} treinamento(s) vencido(s) ou a vencer.`);
   $("alertasDashboard").innerHTML=alertas.length
     ? alertas.map(a=>`<div style="padding:9px;background:#fff7ed;border-left:4px solid var(--laranja);border-radius:8px;margin:8px 0">${a}</div>`).join("")
@@ -1949,7 +2030,7 @@ function statusTreinamento(validade){
 
 function renderTreinamentos(list=state.treinamentos){
   $("tbodyTreinamentos").innerHTML=list.map(t=>{
-    const st=statusTreinamento(t.validade);
+    const st=statusTreinamento(t.validade,t.realizacao,t.treinamento);
     const cls=st.chave==="vencido"?"status-vencido":st.chave==="vencer"?"status-vencer":"status-valido";
     return `<tr>
       <td data-label="Colaborador">${t.nome||""}</td>
@@ -2040,7 +2121,7 @@ $("btnPesquisarTreinamentos")?.addEventListener("click",()=>{
   const filtro=$("filtroTreinamento").value;
   renderTreinamentos(state.treinamentos.filter(t=>{
     const texto=normalizarNome(`${t.nome||""} ${t.titulo||""}`);
-    const status=statusTreinamento(t.validade).chave;
+    const status=statusTreinamento(t.validade,t.realizacao,t.treinamento).chave;
     return (!termo||texto.includes(termo)) && (!filtro||status===filtro);
   }));
 });
@@ -2510,7 +2591,7 @@ $("btnFecharInfra").addEventListener("click",()=>$("modalInfra").classList.add("
 $("btnCancelarInfra").addEventListener("click",()=>$("modalInfra").classList.add("hidden"));
 
 const titulosImpressao={
-  dashboard:"Dashboard Geral",aprovacao:"Folgas para Análise",ferias:"Planejamento de Férias",
+  dashboard:"Dashboard Geral",aprovacao:"Gestão de folgas",ferias:"Planejamento de Férias",
   banco:"Banco de Horas",rotas:"Programação de Rota",treinamentos:"Treinamentos e Certificações",
   infra:"Chamados da Infraestrutura",colaboradores:"Cadastro de Colaboradores",brigada:"Brigada de Emergência"
 };
@@ -2707,6 +2788,7 @@ $("tbodyFolgas").addEventListener("click",async e=>{
     $("editFolgaNome").value=item.nome;
     $("editFolgaData").value=item.data;
     $("editFolgaPeriodo").value=item.periodo||item.turno||"Manhã";
+    $("editFolgaStatus").value=item.status||"Aprovada";
     $("modalFolga").classList.remove("hidden");
   }
 });
@@ -2717,7 +2799,7 @@ $("btnSalvarEdicaoFolga").addEventListener("click",async()=>{
     nome:$("editFolgaNome").value,
     data:$("editFolgaData").value,
     periodo:$("editFolgaPeriodo").value,
-    status:"Aprovada",
+    status:$("editFolgaStatus").value,
     alteradoPor:state.user.uid,alteradoEm:serverTimestamp()
   });
   $("modalFolga").classList.add("hidden");
@@ -2969,6 +3051,41 @@ $("rotaDataInicial").value=new Date().toISOString().slice(0,10);
 atualizarCamposRota();
 
 
+
+
+// ===== Edição manual das datas de treinamentos =====
+document.addEventListener("click",e=>{
+  const btn=e.target.closest('button[data-action="edit-treinamento"]');
+  if(!btn || !isGestor()) return;
+  const item=state.treinamentos.find(t=>t.id===btn.dataset.id);
+  if(!item) return;
+  state.treinamentoEditId=item.id;
+  $("editTreinamentoNome").value=item.nome||"";
+  $("editTreinamentoTitulo").value=item.treinamento||"";
+  $("editTreinamentoRealizacao").value=item.realizacao||"";
+  $("editTreinamentoValidade").value=item.validade||"";
+  $("editTreinamentoObs").value=item.observacao||"";
+  $("modalTreinamento").classList.remove("hidden");
+});
+
+$("btnSalvarTreinamento")?.addEventListener("click",async()=>{
+  if(!state.treinamentoEditId || !isGestor()) return;
+  const realizacao=$("editTreinamentoRealizacao").value;
+  const validade=$("editTreinamentoValidade").value;
+  await updateDoc(doc(db,"treinamentos",state.treinamentoEditId),{
+    treinamento:$("editTreinamentoTitulo").value.trim(),
+    realizacao,
+    validade,
+    observacao:$("editTreinamentoObs").value.trim(),
+    alteradoPor:state.user.uid,
+    alteradoEm:serverTimestamp()
+  });
+  $("modalTreinamento").classList.add("hidden");
+  state.treinamentoEditId=null;
+});
+
+$("btnFecharTreinamento")?.addEventListener("click",()=>$("modalTreinamento").classList.add("hidden"));
+$("btnCancelarTreinamento")?.addEventListener("click",()=>$("modalTreinamento").classList.add("hidden"));
 
 onAuthStateChanged(auth,async user=>{
   if(!user){
