@@ -7,7 +7,7 @@
 <!-- Versão 4.1: cabeçalho corporativo -->
 <!-- Versão 4.2: importação ampliada do Banco de Horas -->
 <!-- Versão 4.3.2: rota em laranja, folgas aprovadas para operador e remoção do efetivo semanal -->
-<title>Gestão Equipe E - V4.13 | Treinamentos Atualizáveis</title>
+<title>Gestão Equipe E - V6.0 | Relatório Banco + Folgas</title>
 <!-- Versão 4.9: dashboard reativo e conclusão de folgas com liberação automática do banco de horas -->
 <!-- Versão 4.8: cabeçalho centralizado, sem logo e impressão otimizada para A4 -->
 <!-- Versão 4.7: melhorias no módulo Infraestrutura e padronização de impressão -->
@@ -852,6 +852,59 @@ border-color:#f57c00!important;
 color:#fff!important;
 }
 </style>
+
+<style id="v54-banco-balanco">
+.v54-wrap{margin:0 0 18px}
+.v54-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+.v54-card{background:#fff;border:1px solid var(--linha,#dbe4ee);border-radius:12px;padding:13px;box-shadow:0 4px 12px rgba(21,42,75,.05);border-top:4px solid var(--laranja,#ff7417)}
+.v54-card .n{font-size:23px;font-weight:900;color:var(--azul-escuro,#073b63)}
+.v54-card .l{font-size:10px;font-weight:900;text-transform:uppercase;color:#667085;margin-top:5px}
+.v54-box{background:#f8fbfe;border:1px solid var(--linha,#dbe4ee);border-radius:12px;padding:13px;margin-bottom:12px}
+.v54-head{display:flex;justify-content:space-between;gap:10px;font-size:12px;font-weight:900;color:var(--azul-escuro,#073b63)}
+.v54-track{height:12px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:8px 0 5px}
+.v54-track div{height:100%;width:0;background:var(--laranja,#ff7417);border-radius:999px}
+.v54-note{font-size:11px;color:#667085}
+.v54-tablebox{background:#fff;border:1px solid var(--linha,#dbe4ee);border-radius:12px;padding:13px;margin-bottom:14px}
+.v54-tablebox h3{font-size:15px;margin:0 0 9px;color:var(--azul-escuro,#073b63)}
+.v54-table{width:100%;border-collapse:collapse;font-size:12px}
+.v54-table th,.v54-table td{padding:8px;border-bottom:1px solid #e7edf4;text-align:left}
+.v54-table th{background:#f7f9fc;font-size:10px;text-transform:uppercase;color:#667085}
+.v54-pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900}
+.v54-ok{background:#dcfce7;color:#166534}.v54-at{background:#fef3c7;color:#92400e}.v54-cr{background:#fee2e2;color:#991b1b}
+@media(max-width:1000px){.v54-kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:650px){.v54-kpis{grid-template-columns:1fr}.v54-tablebox{overflow:auto}}
+@media print{#banco.active .v54-kpis{grid-template-columns:repeat(5,1fr)!important}.v54-card,.v54-box,.v54-tablebox{box-shadow:none!important;break-inside:avoid}}
+</style>
+
+
+<style id="v59-comprometimento">
+#banco .v54-box{
+  background:#f8fbfe;
+  border:1px solid #cfddeb;
+  padding:14px 14px 13px;
+}
+#banco .v54-head{
+  font-size:12px;
+  color:#073b63;
+}
+#banco .v54-head span:last-child{
+  font-size:13px;
+  font-weight:900;
+}
+#banco .v54-track{
+  height:12px;
+  background:#e3e7eb;
+  margin:8px 0 6px;
+}
+#banco .v54-track div{
+  background:var(--laranja,#ff7417);
+}
+#banco .v54-note{
+  color:#52677c;
+  font-size:11px;
+}
+</style>
+
 </head>
 <body>
 
@@ -1025,31 +1078,81 @@ color:#fff!important;
 
     <section id="banco" class="view">
       <div class="card">
-        <div class="section-head"><div class="icon">⏱</div><h2>Banco de Horas</h2></div>
-        <div class="resumo" style="margin-bottom:14px">
-          <div class="mini-card"><div id="bancoEquipeCadastrada" class="numero">0</div><div>Colaboradores sob gestão</div></div>
-          <div class="mini-card"><div id="bancoImportadosUltimo" class="numero">0</div><div>Importados na última planilha</div></div>
-          <div class="mini-card"><div id="bancoIgnoradosUltimo" class="numero">0</div><div>Ignorados por não pertencerem à equipe</div></div>
+        <div class="section-head">
+          <div class="icon">⏱</div>
+          <h2>Banco de Horas</h2>
         </div>
+
+        <div class="v54-wrap" id="v54BalancoBanco">
+          <div class="v54-kpis">
+            <div class="v54-card"><div class="n" id="v54Banco">00:00</div><div class="l">Banco RH Total</div></div>
+            <div class="v54-card"><div class="n" id="v54Reservado">00:00</div><div class="l">Horas em folgas agendadas (07h)</div></div>
+            <div class="v54-card"><div class="n" id="v54Disponivel">00:00</div><div class="l">Saldo disponível</div></div>
+            <div class="v54-card"><div class="n" id="v54Agendadas">0</div><div class="l">Folgas agendadas</div></div>
+            <div class="v54-card"><div class="n" id="v54Concluidas">0</div><div class="l">Folgas concluídas</div></div>
+          </div>
+
+          
+          <div class="v54-box">
+            <div class="v54-head">
+              <span>Comprometimento do Banco de Horas</span>
+              <span id="v54Pct">0,0%</span>
+            </div>
+            <div class="v54-track"><div id="v54Bar"></div></div>
+            <div class="v54-note" id="v54Resumo">
+              Comparativo entre o Banco RH Total e as horas já comprometidas com folgas futuras.
+            </div>
+          </div>
+
+          <div class="v54-tablebox">
+            <h3>Banco de Horas × Folgas Agendadas</h3>
+            <div style="overflow:auto">
+              <table class="v54-table">
+                <thead>
+                  <tr>
+                    <th>Colaborador</th>
+                    <th>Banco RH</th>
+                    <th>Folgas agendadas</th>
+                    <th>Horas reservadas</th>
+                    <th>Saldo disponível</th>
+                    <th>Comprometimento</th>
+                    <th>Situação</th>
+                  </tr>
+                </thead>
+                <tbody id="v54Body"><tr><td colspan="7">Aguardando dados...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <div class="import-box supervisor-only no-print">
-          <label>Importar planilha semanal do RH (XLSX, XLS ou CSV)</label>
+          <label>Atualizar Banco de Horas — planilha semanal do RH (XLSX, XLS ou CSV)</label>
           <input id="arquivoBanco" type="file" accept=".xlsx,.xls,.csv">
           <p style="margin:8px 0 0;color:var(--muted);font-size:12px">
-      Compatível com a planilha <b>Banco de horas do time</b>, mesmo quando o cabeçalho começa após linhas de título e data.
-      Colunas reconhecidas: Nome, Cargo, Total Banco, Matrícula e Saldo/Banco de Horas.
-      Serão importados somente os colaboradores cadastrados na equipe. Cada folga pendente ou aprovada reserva 07:00 do saldo.
-    </p>
-    <div id="statusImportacaoBanco" class="status-importacao-banco hidden"></div>
+            Compatível com a planilha <b>Banco de horas do time</b>. Serão importados somente os colaboradores cadastrados na equipe.
+            Cada folga futura pendente ou aprovada reserva 07:00 do saldo.
+          </p>
+          <div id="statusImportacaoBanco" class="status-importacao-banco hidden"></div>
         </div>
+
         <div class="filters no-print" style="margin-top:14px">
           <div><label>Pesquisar colaborador</label><input id="pesquisaBanco" placeholder="Nome ou matrícula"></div>
           <div><label>Status</label><select id="filtroBanco"><option value="">Todos</option><option value="positivo">Positivo/zerado</option><option value="negativo">Negativo</option></select></div>
-          <div class="actions" style="margin:0"><button id="btnPesquisarBanco" class="btn-blue">Pesquisar</button><button id="btnImprimirBanco" class="btn-orange">Imprimir</button></div>
+          <div class="actions" style="margin:0"><button id="btnPesquisarBanco" class="btn-blue">Pesquisar</button><button id="btnRelatorioBancoFolgas" class="btn-green">Relatório Banco + Folgas</button><button id="btnImprimirBanco" class="btn-orange">Imprimir</button></div>
         </div>
-        <table>
+
+        <!-- Tabela técnica preservada apenas para compatibilidade com a lógica existente. -->
+        <table id="v56TabelaLegadaBanco" style="display:none!important">
           <thead><tr><th>Colaborador</th><th>Matrícula</th><th>Saldo RH</th><th>Folgas</th><th>Saldo disponível</th><th>Atualização</th><th>Status</th></tr></thead>
           <tbody id="tbodyBanco"></tbody>
         </table>
+
+        <!-- IDs preservados para a rotina de importação existente, sem cards visuais duplicados. -->
+        <div style="display:none!important">
+          <span id="bancoEquipeCadastrada">0</span>
+          <span id="bancoImportadosUltimo">0</span>
+          <span id="bancoIgnoradosUltimo">0</span>
+        </div>
       </div>
     </section>
 
@@ -1345,6 +1448,7 @@ const state = {
   colaboradorEditId: null,
   unsubscribers: []
 };
+window.__equipeEState = state;
 
 const $ = id => document.getElementById(id);
 const perfilAtual = () => String(state.profile?.perfil||"").trim().toLowerCase();
@@ -3152,6 +3256,341 @@ onAuthStateChanged(auth,async user=>{
   </div>
 </div>
 
+
+
+<script id="v54-banco-balanco-js">
+(function(){
+ const MIN_FOLGA=420, LIMITE_DEBITO=1800, $=id=>document.getElementById(id);
+ const norm=s=>(s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toUpperCase();
+
+ function toMin(v){
+   if(typeof window.saldoParaMinutos==="function"){
+     try{return Number(window.saldoParaMinutos(v)||0)}catch(e){}
+   }
+   if(v==null||v==="")return 0;
+   if(typeof v==="number")return Math.round(v*60);
+   let s=String(v).trim().replace(",",".");
+   let neg=s.startsWith("-");
+   s=s.replace(/^[+-]/,"");
+   if(s.includes(":")){
+     let a=s.split(":").map(Number);
+     let m=Math.abs(a[0]||0)*60+(a[1]||0);
+     return neg?-m:m;
+   }
+   let n=Number(s);
+   return Number.isFinite(n)?Math.round((neg?-n:n)*60):0;
+ }
+ function fmt(m){
+   m=Math.round(Number(m)||0);
+   let sg=m<0?"-":"";
+   m=Math.abs(m);
+   return sg+String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+ }
+ function usoLimite(saldoProjetado){
+   // 0h = 0% da faixa desejada; -30h = 100% da faixa.
+   // Saldo positivo permanece em 0%, pois ainda está acima da referência.
+   if(saldoProjetado>=0) return 0;
+   return Math.min(100, Math.abs(saldoProjetado)/LIMITE_DEBITO*100);
+ }
+ function classificacao(saldoProjetado){
+   // Regra gerencial informada:
+   // saldo positivo = mais desconfortável;
+   // quanto mais negativo e próximo de -30h = melhor.
+   if(saldoProjetado>0) return {st:"Desconfortável",cl:"v54-cr"};
+   if(saldoProjetado===0) return {st:"Atenção",cl:"v54-at"};
+   if(saldoProjetado>-900) return {st:"Em evolução",cl:"v54-at"};       // 0 a -14:59
+   if(saldoProjetado>-1440) return {st:"Confortável",cl:"v54-ok"};     // -15 a -23:59
+   if(saldoProjetado>=-LIMITE_DEBITO) return {st:"Muito confortável",cl:"v54-ok"}; // -24 a -30
+   return {st:"Fora do limite",cl:"v54-cr"};                           // abaixo de -30
+ }
+
+ function render(){
+   const state=window.__equipeEState;
+   if(!state||!Array.isArray(state.bancoHoras)||!Array.isArray(state.folgas))return;
+
+   const hoje=new Date().toISOString().slice(0,10);
+   const ativos=Array.isArray(state.colaboradores)?state.colaboradores.filter(c=>c.ativo!==false):[];
+   const nomesAtivos=new Set(ativos.map(c=>norm(c.nome)));
+   const matsAtivas=new Set(ativos.map(c=>String(c.matricula||"").trim()).filter(Boolean));
+
+   const bancoEquipe=state.bancoHoras.filter(b=>
+     !ativos.length || nomesAtivos.has(norm(b.nome)) || matsAtivas.has(String(b.matricula||"").trim())
+   );
+   const futuras=state.folgas.filter(f=>
+     ["Pendente","Aprovada"].includes(f.status) &&
+     (!f.data||f.data>=hoje) &&
+     (!ativos.length||nomesAtivos.has(norm(f.nome)))
+   );
+   const concl=state.folgas.filter(f=>
+     f.status==="Concluída" &&
+     (!ativos.length||nomesAtivos.has(norm(f.nome)))
+   );
+
+   let total=0,reservado=0,debitoProjetadoTotal=0;
+   const rows=bancoEquipe.map(b=>{
+      const banco=toMin(b.saldo);
+      total+=banco;
+      const fs=futuras.filter(f=>norm(f.nome)===norm(b.nome));
+      const res=fs.length*MIN_FOLGA;
+      reservado+=res;
+      const disp=banco-res;
+      if(disp<0) debitoProjetadoTotal+=Math.abs(disp);
+
+      const pct=usoLimite(disp);
+      const sit=classificacao(disp);
+      return {nome:b.nome||"",banco,q:fs.length,res,disp,pct,st:sit.st,cl:sit.cl};
+   }).sort((a,b)=>a.disp-b.disp);
+
+   const disp=total-reservado;
+
+   // Comprometimento gerencial:
+   // horas reservadas em folgas futuras / Banco RH Total.
+   const pctGeral=total>0
+     ? Math.max(0,Math.min(100,(reservado/total)*100))
+     : (reservado>0 ? 100 : 0);
+
+   if($("v54Banco"))$("v54Banco").textContent=fmt(total);
+   if($("v54Reservado"))$("v54Reservado").textContent=fmt(reservado);
+   if($("v54Disponivel"))$("v54Disponivel").textContent=fmt(disp);
+   if($("v54Agendadas"))$("v54Agendadas").textContent=futuras.length;
+   if($("v54Concluidas"))$("v54Concluidas").textContent=concl.length;
+   if($("v54Pct"))$("v54Pct").textContent=pctGeral.toFixed(1).replace(".",",")+"%";
+   if($("v54Bar"))$("v54Bar").style.width=pctGeral+"%";
+
+   if($("v54Resumo")){
+     $("v54Resumo").textContent =
+       `${fmt(reservado)} estão comprometidas com ${futuras.length} folga(s) futura(s). `+
+       `Saldo projetado disponível: ${fmt(disp)}.`;
+   }
+
+   if($("v54Body")){
+     $("v54Body").innerHTML=rows.length?rows.map(r=>`
+       <tr>
+         <td><strong>${r.nome}</strong></td>
+         <td>${fmt(r.banco)}</td>
+         <td>${r.q}</td>
+         <td>${fmt(r.res)}</td>
+         <td><strong>${fmt(r.disp)}</strong></td>
+         <td>${r.pct.toFixed(1).replace(".",",")}%</td>
+         <td><span class="v54-pill ${r.cl}">${r.st}</span></td>
+       </tr>`).join(""):`<tr><td colspan="7">Nenhum registro de banco de horas.</td></tr>`;
+   }
+ }
+ window.atualizarBalancoBancoHoras=render;
+ document.addEventListener("DOMContentLoaded",()=>{render();setInterval(render,1200)});
+})();
+</script>
+
+
+<script id="v56-filtro-balanco">
+(function(){
+  function norm(s){return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();}
+  function aplicar(){
+    const busca=norm(document.getElementById("pesquisaBanco")?.value);
+    const status=document.getElementById("filtroBanco")?.value||"";
+    document.querySelectorAll("#v54Body tr").forEach(tr=>{
+      const txt=norm(tr.textContent);
+      let okBusca=!busca||txt.includes(busca);
+      let okStatus=true;
+      if(status==="negativo") okStatus=txt.includes("em evolução")||txt.includes("confortável")||txt.includes("muito confortável")||txt.includes("fora do limite");
+      if(status==="positivo") okStatus=txt.includes("desconfortável")||txt.includes("atenção");
+      tr.style.display=(okBusca&&okStatus)?"":"none";
+    });
+  }
+  document.addEventListener("click",e=>{
+    if(e.target?.id==="btnPesquisarBanco") setTimeout(aplicar,50);
+  });
+  document.addEventListener("input",e=>{
+    if(e.target?.id==="pesquisaBanco") aplicar();
+  });
+  document.addEventListener("change",e=>{
+    if(e.target?.id==="filtroBanco") aplicar();
+  });
+})();
+</script>
+
+
+<script id="v60-relatorio-banco-folgas">
+(function(){
+  const MIN_FOLGA = 420;
+  const norm = s => (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toUpperCase();
+
+  function toMin(v){
+    if(typeof window.saldoParaMinutos==="function"){
+      try{return Number(window.saldoParaMinutos(v)||0)}catch(e){}
+    }
+    if(v==null||v==="") return 0;
+    if(typeof v==="number") return Math.round(v*60);
+    let s=String(v).trim().replace(",",".");
+    const neg=s.startsWith("-");
+    s=s.replace(/^[+-]/,"");
+    if(s.includes(":")){
+      const a=s.split(":").map(Number);
+      const m=Math.abs(a[0]||0)*60+(a[1]||0);
+      return neg?-m:m;
+    }
+    const n=Number(s);
+    return Number.isFinite(n)?Math.round((neg?-n:n)*60):0;
+  }
+
+  function fmt(m){
+    m=Math.round(Number(m)||0);
+    const sg=m<0?"-":"";
+    m=Math.abs(m);
+    return sg+String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+  }
+
+  function dataBR(v){
+    if(!v) return "-";
+    const p=String(v).slice(0,10).split("-");
+    return p.length===3 ? `${p[2]}/${p[1]}/${p[0]}` : v;
+  }
+
+  function esc(s){
+    return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  function gerar(){
+    const state=window.__equipeEState;
+    if(!state || !Array.isArray(state.bancoHoras) || !Array.isArray(state.folgas)){
+      alert("Os dados do Banco de Horas ainda não foram carregados.");
+      return;
+    }
+
+    const hoje=new Date().toISOString().slice(0,10);
+    const ativos=Array.isArray(state.colaboradores) ? state.colaboradores.filter(c=>c.ativo!==false) : [];
+    const nomesAtivos=new Set(ativos.map(c=>norm(c.nome)));
+    const matsAtivas=new Set(ativos.map(c=>String(c.matricula||"").trim()).filter(Boolean));
+
+    const banco=state.bancoHoras.filter(b =>
+      !ativos.length || nomesAtivos.has(norm(b.nome)) || matsAtivas.has(String(b.matricula||"").trim())
+    );
+
+    const folgasFuturas=state.folgas.filter(f =>
+      ["Pendente","Aprovada"].includes(f.status) &&
+      (!f.data || f.data>=hoje) &&
+      (!ativos.length || nomesAtivos.has(norm(f.nome)))
+    );
+
+    const folgasConcluidas=state.folgas.filter(f =>
+      f.status==="Concluída" &&
+      (!ativos.length || nomesAtivos.has(norm(f.nome)))
+    );
+
+    let totalBanco=0, totalComp=0;
+    const linhas=banco.map(b=>{
+      const bancoMin=toMin(b.saldo);
+      const fs=folgasFuturas.filter(f=>norm(f.nome)===norm(b.nome)).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+      const comprometido=fs.length*MIN_FOLGA;
+      const projetado=bancoMin-comprometido;
+      totalBanco+=bancoMin;
+      totalComp+=comprometido;
+      return {
+        nome:b.nome||"",
+        matricula:b.matricula||"",
+        banco:bancoMin,
+        folgas:fs,
+        comprometido,
+        projetado
+      };
+    }).sort((a,b)=>a.projetado-b.projetado);
+
+    const totalProjetado=totalBanco-totalComp;
+    const pct=totalBanco>0 ? Math.max(0,Math.min(100,(totalComp/totalBanco)*100)) : (totalComp>0?100:0);
+    const emissao=new Date().toLocaleString("pt-BR");
+
+    const linhasHtml=linhas.map(r=>{
+      const datas=r.folgas.length
+        ? r.folgas.map(f=>`${dataBR(f.data)} — ${esc(f.status)}${f.periodo?` / ${esc(f.periodo)}`:""}`).join("<br>")
+        : "—";
+      return `<tr>
+        <td><strong>${esc(r.nome)}</strong>${r.matricula?`<br><small>Matrícula: ${esc(r.matricula)}</small>`:""}</td>
+        <td class="num">${fmt(r.banco)}</td>
+        <td class="center">${r.folgas.length}</td>
+        <td>${datas}</td>
+        <td class="num">${fmt(r.comprometido)}</td>
+        <td class="num ${r.projetado<0?"neg":"pos"}">${fmt(r.projetado)}</td>
+      </tr>`;
+    }).join("");
+
+    const w=window.open("","_blank");
+    if(!w){
+      alert("O navegador bloqueou a abertura do relatório. Autorize pop-ups para esta página.");
+      return;
+    }
+
+    w.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório Banco de Horas + Folgas</title>
+<style>
+@page{size:A4 landscape;margin:9mm}
+*{box-sizing:border-box}
+body{font-family:Segoe UI,Arial,sans-serif;color:#17212f;margin:0;background:#fff}
+.header{text-align:center;border-bottom:3px solid #f47721;padding-bottom:10px;margin-bottom:14px}
+.header h1{margin:0;color:#082f6d;font-size:22px;text-transform:uppercase}
+.header p{margin:5px 0 0;color:#64748b;font-size:11px}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.kpi{border:1px solid #dbe4ee;border-top:3px solid #f47721;border-radius:8px;padding:9px;text-align:center}
+.kpi b{display:block;color:#082f6d;font-size:18px}
+.kpi span{font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase}
+.comp{border:1px solid #dbe4ee;border-radius:8px;padding:9px 12px;margin-bottom:12px}
+.comp-head{display:flex;justify-content:space-between;font-size:10px;font-weight:800;color:#082f6d}
+.track{height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin-top:6px}
+.track div{height:100%;background:#f47721;width:${pct}%}
+h2{color:#082f6d;font-size:14px;margin:12px 0 6px}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+thead{display:table-header-group}
+tr{break-inside:avoid;page-break-inside:avoid}
+th,td{border:1px solid #dbe4ee;padding:5px 6px;font-size:8.5px;vertical-align:top;overflow-wrap:anywhere}
+th{background:#eef3f8;color:#263d5d;text-transform:uppercase;font-size:7.8px}
+th:nth-child(1){width:22%} th:nth-child(2){width:10%} th:nth-child(3){width:8%}
+th:nth-child(4){width:30%} th:nth-child(5){width:14%} th:nth-child(6){width:16%}
+.num{text-align:right;font-weight:800}.center{text-align:center}.neg{color:#991b1b}.pos{color:#166534}
+small{color:#64748b}
+.footer{margin-top:8px;font-size:8px;color:#64748b;text-align:right}
+.actions{margin:0 0 12px;text-align:right}
+.actions button{border:0;border-radius:7px;padding:8px 12px;background:#082f6d;color:#fff;font-weight:800;cursor:pointer}
+@media print{.actions{display:none}}
+</style>
+</head>
+<body>
+<div class="actions"><button onclick="window.print()">Imprimir / Salvar em PDF</button></div>
+<div class="header">
+  <h1>Relatório Banco de Horas + Folgas</h1>
+  <p>Gestão Equipe E • Emitido em ${esc(emissao)}</p>
+</div>
+<div class="kpis">
+  <div class="kpi"><b>${fmt(totalBanco)}</b><span>Banco RH Total</span></div>
+  <div class="kpi"><b>${fmt(totalComp)}</b><span>Horas comprometidas</span></div>
+  <div class="kpi"><b>${fmt(totalProjetado)}</b><span>Saldo projetado</span></div>
+  <div class="kpi"><b>${folgasFuturas.length}</b><span>Folgas futuras</span></div>
+  <div class="kpi"><b>${folgasConcluidas.length}</b><span>Folgas concluídas</span></div>
+</div>
+<div class="comp">
+  <div class="comp-head"><span>Comprometimento do Banco de Horas</span><span>${pct.toFixed(1).replace(".",",")}%</span></div>
+  <div class="track"><div></div></div>
+</div>
+<h2>Detalhamento por colaborador</h2>
+<table>
+<thead><tr>
+<th>Colaborador</th><th>Banco RH</th><th>Qtd. folgas</th><th>Folgas futuras / situação</th><th>Horas comprometidas</th><th>Saldo projetado</th>
+</tr></thead>
+<tbody>${linhasHtml || '<tr><td colspan="6">Nenhum registro disponível.</td></tr>'}</tbody>
+</table>
+<div class="footer">Relatório gerado pelo Portal Gestão Equipe E — V6.0</div>
+</body></html>`);
+    w.document.close();
+    w.focus();
+  }
+
+  document.addEventListener("click",function(e){
+    if(e.target && e.target.id==="btnRelatorioBancoFolgas") gerar();
+  });
+  window.gerarRelatorioBancoFolgas=gerar;
+})();
+</script>
 
 </body>
 </html>
